@@ -41,11 +41,11 @@ def water_force(x_fu):
 
 # 计算浮子的加速度
 def acc_fu(time, x_fu, v_fu, x_zh, v_zh):
-    return (wave_force(time) - c_wave*v_fu - c_pto*pow(abs(v_fu-v_zh), 0.5) - water_force(x_fu)-k*(x_fu-x_zh))/(m_fu + m_fu_add)
+    return (wave_force(time) - c_wave*v_fu - c_pto*pow(abs(v_fu-v_zh), 0.5)*(v_fu-v_zh) - water_force(x_fu)-k*(x_fu-x_zh))/(m_fu + m_fu_add)
 
 # 计算振子的加速度
 def acc_zh(time, x_fu, v_fu, x_zh, v_zh):
-    return (c_pto*pow(abs(v_fu-v_zh), 0.5)+k*(x_fu-x_zh))/m_zhen
+    return (c_pto*pow(abs(v_fu-v_zh), 0.5)*(v_fu-v_zh)+k*(x_fu-x_zh))/m_zhen
 
 
 def rk4(time, x_fu, v_fu, x_zh, v_zh):
