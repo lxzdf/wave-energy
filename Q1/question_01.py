@@ -2,6 +2,7 @@
 # 此为第一题的第一问，使用四阶龙格库塔法
 import os
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from numpy.f2py.crackfortran import true_intent_list
 
@@ -29,12 +30,14 @@ def wave_force(t):
 
 # 静水恢复力的计算
 def water_force(x_fu):
-    if x_fu>0 and x_fu<=0.8:
-        return (((x_fu/0.8)**2)*np.pi*x_fu/3)*1025*9.8
-    elif x_fu>0.8 and x_fu<=2.8:
-        return (np.pi*1*1*(x_fu-0.8) + np.pi*1*1*0.8/3)*1025*9.8
+    # x_fu 就是 u1
+    if x_fu <= 2:
+        v_water = np.pi * x_fu
     else:
-        return (np.pi*1*1*2 + np.pi*1*1*0.8/3)*1025*9.8
+        v_water = 2 * np.pi + (1 - ((2.8 - x_fu)/0.8)**3) * (0.8 * np.pi / 3)
+    return v_water * 1025 * 9.8
+
+
 
 # 计算浮子的加速度
 def acc_fu(time, x_fu, v_fu, x_zh, v_zh):
@@ -42,7 +45,7 @@ def acc_fu(time, x_fu, v_fu, x_zh, v_zh):
 
 # 计算振子的加速度
 def acc_zh(time, x_fu, v_fu, x_zh, v_zh):
-    return (0-c_pto*(v_fu-v_zh)-k*(x_fu-x_zh))/m_zhen
+    return (c_pto*(v_fu-v_zh)+k*(x_fu-x_zh))/m_zhen
 
 
 def rk4(time, x_fu, v_fu, x_zh, v_zh):
@@ -93,4 +96,17 @@ while time <= end:
     v_zh_list.append(v_zh)
     time = time + dt
 
+
 # 写入数据
+sample_step = int(0.2/dt)   # 0.2 / 0.001 = 200
+
+rows = []
+for i, t in enumerate(t_list):
+    if i % sample_step == 0:
+        rows.append([t,x_fu_list[i], v_fu_list[i],x_zh_list[i], v_zh_list[i]])
+
+df = pd.DataFrame(rows,columns=['t(s)','x_fu(m)', 'v_fu(m/s)','x_zh(m)', 'v_zh(m/s)'])
+
+df.to_excel("./result1-1.xlsx", index=False)
+
+print("计算完成！")
