@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 # 此为第一题的第一问，使用四阶龙格库塔法
-import os
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from numpy.f2py.crackfortran import true_intent_list
 
 # 浮子与振子在初始时刻的状态
 x_fu = 0.0              # 浮子的位移
