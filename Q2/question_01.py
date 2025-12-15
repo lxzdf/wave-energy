@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
-# 此为第二题的第一问，使用四阶龙格库塔法
-from math import trunc
-
+# 此为第二题的第一问，使用四阶龙格库塔法+变步长求解
 import numpy as np
-import matplotlib.pyplot as plt
 
 # 浮子与振子在初始时刻的状态
 x_fu = 0.0              # 浮子的位移
@@ -26,18 +23,20 @@ end = 500                                         # 结束时间
 # 假设400s之后是稳定的，在计算400s到500s之间的平均功率
 
 # 波浪激励力的计算
-def wave_force(t):
-    return 4890*np.cos(wave_fn*t)
+def wave_force(run_time):
+    return 4890*np.cos(wave_fn*run_time)
 
-# 静水恢复力的计算
-def water_force(x_fu):
-    # x_fu 就是 u1
-    if x_fu <= 2:
-        v_water = np.pi * x_fu
+# 静水恢复力的计算,disp为相对于平衡位置的位移，
+def water_force(disp):
+    if disp <= 2:
+        v_water = np.pi*1*1 * disp
     else:
-        v_water = 2 * np.pi + (1 - ((2.8 - x_fu)/0.8)**3) * (0.8 * np.pi / 3)
+        # 大圆锥的体积
+        v1 = np.pi*1*1*0.8/3
+        # 小圆锥的体积
+        v2 = pow((2.8-disp)/0.8, 2)*np.pi*(2.8-disp)/3
+        v_water = 2*np.pi*1*1 + (v1 - v2)
     return v_water * 1025 * 9.8
-
 
 
 # 计算浮子的加速度
@@ -57,12 +56,10 @@ def rk4(time, x_fu, v_fu, x_zh, v_zh, c_pto):
     zh_K1 = acc_zh(time, x_fu, v_fu, x_zh, v_zh, c_pto)
     zh_L1 = v_zh
 
-
     fu_K2 = acc_fu(time+0.5*dt, x_fu+0.5*dt*fu_L1, v_fu+0.5*dt*fu_K1, x_zh+0.5*dt*zh_L1, v_zh+0.5*dt*zh_K1, c_pto)
     fu_L2 = v_fu + 0.5*dt*fu_K1
     zh_K2 = acc_zh(time+0.5*dt, x_fu+0.5*dt*fu_L1, v_fu+0.5*dt*fu_K1, x_zh+0.5*dt*zh_L1, v_zh+0.5*dt*zh_K1, c_pto)
     zh_L2 = v_zh + 0.5*dt*zh_K1
-
 
     fu_K3 = acc_fu(time+0.5*dt, x_fu+0.5*dt*fu_L2, v_fu+0.5*dt*fu_K2, x_zh+0.5*dt*zh_L2, v_zh+0.5*dt*zh_K2, c_pto)
     fu_L3 = v_fu + 0.5*dt*fu_K2
@@ -95,10 +92,10 @@ def cal_power(c_pto):
 
     while time <= end:
         v_fu, x_fu, v_zh, x_zh = rk4(time, x_fu, v_fu, x_zh, v_zh, c_pto)
+        time = time + dt
         if time >= 400:
             power_sum = power_sum + c_pto * (v_fu-v_zh)*(v_fu-v_zh)
             count = count + 1
-        time = time + dt
 
     return power_sum/count
 
@@ -115,7 +112,6 @@ if __name__ == '__main__':
             max_power = P
             best_c = x
 
-
     for y in range(int(max(0, best_c - 1000)), int(min(100000, best_c + 1000)) + 1, 100):
         if y in evaluated:
             continue
@@ -124,7 +120,6 @@ if __name__ == '__main__':
         if P > max_power:
             max_power = P
             best_c = y
-
 
     for z in range(int(max(0, best_c - 100)), int(min(100000, best_c + 100)) + 1, 10):
         if z in evaluated:
