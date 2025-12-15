@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 此为第一题的第一问，使用四阶龙格库塔法
+# 此为第二题的第二问，使用四阶龙格库塔法
 from math import trunc
 
 import numpy as np
