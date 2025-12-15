@@ -18,22 +18,24 @@ c_wave = 656.3616                                 # 波浪的兴波阻尼系数
 c_pto = 10000                                     # pto的阻尼系数,不是定值,第一问这是个定制
 
 time = 0                                          # 开始时间
-dt = 0.001                                        # 时间步长
+dt = 0.01                                        # 时间步长
 end = 200                                         # 结束时间
 
 # 波浪激励力的计算
-def wave_force(t):
-    return 6250*np.cos(wave_fn*t)
+def wave_force(run_time):
+    return 6250*np.cos(wave_fn*run_time)
 
-# 静水恢复力的计算
-def water_force(x_fu):
-    # x_fu 就是 u1
-    if x_fu <= 2:
-        v_water = np.pi * x_fu
+# 静水恢复力的计算,disp为相对于平衡位置的位移，
+def water_force(disp):
+    if disp <= 2:
+        v_water = np.pi*1*1 * disp
     else:
-        v_water = 2 * np.pi + (1 - ((2.8 - x_fu)/0.8)**3) * (0.8 * np.pi / 3)
+        # 大圆锥的体积
+        v1 = np.pi*1*1*0.8/3
+        # 小圆锥的体积
+        v2 = pow((2.8-disp)/0.8, 2)*np.pi*(2.8-disp)/3
+        v_water = 2*np.pi*1*1 + (v1 - v2)
     return v_water * 1025 * 9.8
-
 
 
 # 计算浮子的加速度
@@ -78,16 +80,17 @@ def rk4(time, x_fu, v_fu, x_zh, v_zh):
     return v_fu_new, x_fu_new, v_zh_new, x_zh_new
 
 
-t_list = []
-x_fu_list, v_fu_list, x_zh_list, v_zh_list = [], [], [], []
+t_list = [0.0]
+x_fu_list, v_fu_list, x_zh_list, v_zh_list = [x_fu], [v_fu], [x_zh], [v_zh]
 while time <= end:
     v_fu, x_fu, v_zh, x_zh = rk4(time, x_fu, v_fu, x_zh, v_zh)
+    time = time + dt
     t_list.append(time)
     x_fu_list.append(x_fu)
     v_fu_list.append(v_fu)
     x_zh_list.append(x_zh)
     v_zh_list.append(v_zh)
-    time = time + dt
+
 
 
 # 写入数据
@@ -99,7 +102,5 @@ for i, t in enumerate(t_list):
         rows.append([t,x_fu_list[i], v_fu_list[i],x_zh_list[i], v_zh_list[i]])
 
 df = pd.DataFrame(rows,columns=['t(s)','x_fu(m)', 'v_fu(m/s)','x_zh(m)', 'v_zh(m/s)'])
-
 df.to_excel("./result1-2.xlsx", index=False)
-
 print("计算完成！")
