@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 # 此为第二题的第二问，使用四阶龙格库塔法
-from math import trunc
-
 import numpy as np
-import matplotlib.pyplot as plt
 
 # 浮子与振子在初始时刻的状态
 x_fu = 0.0              # 浮子的位移
@@ -20,94 +17,83 @@ c_wave = 167.8395                                 # 波浪的兴波阻尼系数
 # c_pto                                 --------- # pto的阻尼系数,这个是代求值
 # kkk                                   --------- # 幂指数取值
 
-time = 0                                          # 开始时间
 dt = 0.01                                        # 时间步长
 end = 500                                         # 结束时间
-
+power_start = 400.0
 # 假设400s之后是稳定的，在计算400s到500s之间的平均功率
 
 # 波浪激励力的计算
 def wave_force(t):
     return 4890*np.cos(wave_fn*t)
 
-# 静水恢复力的计算
-def water_force(x_fu):
-    # x_fu 就是 u1
-    if x_fu <= 2:
-        v_water = np.pi * x_fu
+# 静水恢复力的计算,disp为相对于平衡位置的位移，
+def water_force(disp):
+    if disp <= 2:
+        v_water = np.pi*1*1 * disp
     else:
-        v_water = 2 * np.pi + (1 - ((2.8 - x_fu)/0.8)**3) * (0.8 * np.pi / 3)
+        # 大圆锥的体积
+        v1 = np.pi*1*1*0.8/3
+        # 小圆锥的体积
+        v2 = pow((2.8-disp)/0.8, 2)*np.pi*(2.8-disp)/3
+        v_water = 2*np.pi*1*1 + (v1 - v2)
     return v_water * 1025 * 9.8
-
 
 
 # 计算浮子的加速度
 def acc_fu(time, x_fu, v_fu, x_zh, v_zh, c_pto, kkk):
-    return (wave_force(time) - c_wave*v_fu - c_pto*pow(abs(v_fu-v_zh), kkk)*(v_fu-v_zh) - water_force(x_fu)-k*(x_fu-x_zh))/(m_fu + m_fu_add)
+    return (wave_force(time) - c_wave*v_fu - c_pto*pow(abs(v_fu-v_zh), kkk)*(v_fu-v_zh) - water_force(x_fu) - k*(x_fu-x_zh))/(m_fu + m_fu_add)
 
-# 计算振子的加速度
+
+# 计算振子的加速度，振子与浮子，关于阻尼、弹簧产生的力互为相互作用力
 def acc_zh(time, x_fu, v_fu, x_zh, v_zh, c_pto, kkk):
     return (c_pto*pow(abs(v_fu-v_zh), kkk)*(v_fu-v_zh)+k*(x_fu-x_zh))/m_zhen
 
 
-def rk4(time, x_fu, v_fu, x_zh, v_zh, c_pto, kkk):
-    # 浮子的速度(L)、加速度(K)----[t+Δt时刻]
-    fu_K1 = acc_fu(time, x_fu, v_fu, x_zh, v_zh, c_pto, kkk)
-    fu_L1 = v_fu                                                                                                # 使用t时刻的速度
-    # 振子的速度(L)、加速度(K)----[t+Δt时刻]
-    zh_K1 = acc_zh(time, x_fu, v_fu, x_zh, v_zh, c_pto, kkk)
-    zh_L1 = v_zh
+# 等价的方法
+def deriv(run_time, y, c_pto, kkk):
+    x_fu = y[0]
+    v_fu = y[1]
+    x_zh = y[2]
+    v_zh = y[3]
+    a_fu = acc_fu(run_time, x_fu, v_fu, x_zh, v_zh, c_pto, kkk)
+    a_zh = acc_zh(run_time, x_fu, v_fu, x_zh, v_zh, c_pto, kkk)
 
+    return np.array([v_fu, a_fu, v_zh, a_zh], dtype=float)
 
-    fu_K2 = acc_fu(time+0.5*dt, x_fu+0.5*dt*fu_L1, v_fu+0.5*dt*fu_K1, x_zh+0.5*dt*zh_L1, v_zh+0.5*dt*zh_K1, c_pto, kkk)
-    fu_L2 = v_fu + 0.5*dt*fu_K1
-    zh_K2 = acc_zh(time+0.5*dt, x_fu+0.5*dt*fu_L1, v_fu+0.5*dt*fu_K1, x_zh+0.5*dt*zh_L1, v_zh+0.5*dt*zh_K1, c_pto, kkk)
-    zh_L2 = v_zh + 0.5*dt*zh_K1
-
-
-    fu_K3 = acc_fu(time+0.5*dt, x_fu+0.5*dt*fu_L2, v_fu+0.5*dt*fu_K2, x_zh+0.5*dt*zh_L2, v_zh+0.5*dt*zh_K2, c_pto, kkk)
-    fu_L3 = v_fu + 0.5*dt*fu_K2
-    zh_K3 = acc_zh(time+0.5*dt, x_fu+0.5*dt*fu_L2, v_fu+0.5*dt*fu_K2, x_zh+0.5*dt*zh_L2, v_zh+0.5*dt*zh_K2,c_pto, kkk)
-    zh_L3 = v_zh + 0.5*dt*zh_K2
-
-    fu_K4 = acc_fu(time+dt, x_fu+dt*fu_L3, v_fu+dt*fu_K3, x_zh+dt*zh_L3, v_zh+dt*zh_K3, c_pto, kkk)
-    fu_L4 = v_fu + fu_K3*dt
-    zh_K4 = acc_zh(time+dt, x_fu+dt*fu_L3, v_fu+dt*fu_K3, x_zh+dt*zh_L3, v_zh+dt*zh_K3, c_pto, kkk)
-    zh_L4 = v_zh + zh_K3*dt
-
-    # 计算得到t+Δt时刻的浮子、振子的速度与位移
-    v_fu_new = v_fu + dt*(fu_K1 + 2*fu_K2 + 2*fu_K3 + fu_K4)/6
-    x_fu_new = x_fu + dt*(fu_L1 + 2*fu_L2 + 2*fu_L3 + fu_L4)/6
-
-    v_zh_new = v_zh + dt*(zh_K1 + 2*zh_K2 + 2*zh_K3 + zh_K4)/6
-    x_zh_new = x_zh + dt*(zh_L1 + 2*zh_L2 + 2*zh_L3 + zh_L4)/6
-
-    return v_fu_new, x_fu_new, v_zh_new, x_zh_new
-
+# 四阶龙格库塔法主要做的事情是，给定当前时刻的t以及当前时刻的系统状态，使用四阶龙格库塔法将此状态推进一个步长，得到下一时刻的状态
+def rk4_step(t, y, h, c_pto, kkk):
+    k1 = deriv(t, y, c_pto, kkk)
+    k2 = deriv(t+0.5*h, y+0.5*h*k1, c_pto, kkk)
+    k3 = deriv(t+0.5*h, y+0.5*h*k2, c_pto, kkk)
+    k4 = deriv(t+h, y+h*k3, c_pto, kkk)
+    return y + h*(k1 + 2*k2 + 2*k3 + k4)/6
 
 def cal_power(c_pto, kkk):
-    count = 0   # 时间步
+    count = 0       # 时间步
     power_sum = 0.0 # 功率
-    time = 0.0
-    x_fu = 0.0
-    v_fu = 0.0
-    x_zh = 0.0
-    v_zh = 0.0
+    time = 0.0      # 起始时间
+    y = np.array([0.0, 0.0, 0.0, 0.0], dtype=float)
+    steps = int(np.floor(end / dt))
 
-    while time <= end:
-        v_fu, x_fu, v_zh, x_zh = rk4(time, x_fu, v_fu, x_zh, v_zh, c_pto, kkk)
-        if time >= 400:
-            power_sum = power_sum + c_pto*pow(abs(v_fu-v_zh), kkk)*(v_fu-v_zh)*(v_fu-v_zh)
+    for zz in range(steps):
+        y = rk4_step(time, y, dt, c_pto, kkk)
+        time = time+dt
+
+        if time >= power_start:
+            v_rel = y[1] - y[3]
+            pp = c_pto * (abs(v_rel) ** kkk) * (v_rel ** 2)
+            power_sum = power_sum + pp
             count = count + 1
-        time = time + dt
 
-    return power_sum/count
+    return power_sum / count
+
+
 
 if __name__ == '__main__':
 
-    gol_best_c = 0.0
-    gol_best_k = 0.0
-    gol_best_p = -1.0
+    gol_best_c = 0.0        # 最佳的阻尼
+    gol_best_k = 0.0        # 最佳的指数
+    gol_best_p = -1.0       # 最佳的功率
 
     for kkk in np.arange(0.0, 1.0001, 0.1):
         best_c = 0.0
