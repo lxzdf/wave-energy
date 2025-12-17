@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-# 此为第一题的第一问，使用四阶龙格库塔法，但是这是最新的方法，作为一个备份，我也看一看龙格库塔法简写是什么样的
-# 使用时间步，更贴合cfd
+# 此为第一题的第二问，使用四阶龙格库塔法
 import numpy as np
 import pandas as pd
 
@@ -14,7 +13,6 @@ wave_fn = 1.4005                                  # 波浪的圆频率
 m_fu = 4866                                       # 浮子的质量
 m_fu_add = 1335.535                               # 浮子的附加质量
 m_zhen = 2433                                     # 振子的质量
-k = 80000                                         # pto弹簧刚度
 c_wave = 656.3616                                 # 波浪的兴波阻尼系数
 c_pto = 10000                                     # pto的阻尼系数,不是定值,第一问这是个定值
 
@@ -26,8 +24,7 @@ end = 200                                         # 结束时间
 def wave_force(run_time):
     return 6250*np.cos(wave_fn*run_time)
 
-# 静水恢复力的计算,可以把海水想象成一个弹簧,这里的静水恢复力是变化的量，关于圆柱的变化
-# 可以验算一下，实际上这个变化只在圆柱段，不会到圆锥段的
+# 静水恢复力的计算,可以把海水想象成一个弹簧,这里的静水恢复力是变化的量，关于圆柱的变化。此外还可以验算一下，实际上这个变化只在圆柱段，不会到圆锥段的
 
 # 静水恢复力的计算,disp为相对于平衡位置的位移，
 def water_force(disp):
@@ -41,16 +38,13 @@ def water_force(disp):
         v_water = 2*np.pi*1*1 + (v1 - v2)
     return v_water * 1025 * 9.8
 
-
 # 计算浮子的加速度
 def acc_fu(time, x_fu, v_fu, x_zh, v_zh):
-    return (wave_force(time) - c_wave*v_fu - c_pto*pow(abs(v_fu-v_zh), 0.5)*(v_fu-v_zh) - water_force(x_fu) - k*(x_fu-x_zh))/(m_fu + m_fu_add)
-
+    return (wave_force(time) - c_wave*v_fu - c_pto*pow(abs(v_fu-v_zh), 0.5)*(v_fu-v_zh) - water_force(x_fu) - 80000*(x_fu-x_zh))/(m_fu + m_fu_add)
 
 # 计算振子的加速度，振子与浮子，关于阻尼、弹簧产生的力互为相互作用力
 def acc_zh(time, x_fu, v_fu, x_zh, v_zh):
-    return (c_pto*pow(abs(v_fu-v_zh), 0.5)*(v_fu-v_zh)+k*(x_fu-x_zh))/m_zhen
-
+    return (c_pto*pow(abs(v_fu-v_zh), 0.5)*(v_fu-v_zh)+80000*(x_fu-x_zh))/m_zhen
 
 # 等价的方法
 def deriv(run_time, y):
