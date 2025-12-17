@@ -8,15 +8,15 @@ x_zh = 0.0              # 振子的位移
 v_fu = 0.0              # 浮子的速度
 v_zh = 0.0              # 振子的速度
 
+
 wave_fn = 2.2143                                  # 波浪的圆频率
 m_fu = 4866                                       # 浮子的质量
-m_fu_add = 1165.992                               # 浮子的附加质量
+m_add = 1165.992                               # 浮子的附加质量
 m_zhen = 2433                                     # 振子的质量
-k = 80000                                         # pto弹簧刚度
 c_wave = 167.8395                                 # 波浪的兴波阻尼系数
-# c_pto                                 --------- # pto的阻尼系数,这个是代求值
+c_pto = None                                      # pto的阻尼系数,这个是代求值
 
-dt = 0.01                                        # 时间步长
+dt = 0.01                                         # 时间步长
 end = 500                                         # 结束时间
 power_start = 400.0
 # 假设400s之后是稳定的，在计算400s到500s之间的平均功率
@@ -39,11 +39,11 @@ def water_force(disp):
 
 # 计算浮子的加速度
 def acc_fu(time, x_fu, v_fu, x_zh, v_zh, c_pto):
-    return (wave_force(time) - c_wave*v_fu - c_pto*(v_fu-v_zh) - water_force(x_fu)-k*(x_fu-x_zh))/(m_fu + m_fu_add)
+    return (wave_force(time) - c_wave*v_fu - c_pto*(v_fu-v_zh) - water_force(x_fu)-80000*(x_fu-x_zh))/(m_fu + m_add)
 
 # 计算振子的加速度
 def acc_zh(time, x_fu, v_fu, x_zh, v_zh, c_pto):
-    return (c_pto*(v_fu-v_zh)+k*(x_fu-x_zh))/m_zhen
+    return (c_pto*(v_fu-v_zh)+80000*(x_fu-x_zh))/m_zhen
 
 
 # 等价的方法
