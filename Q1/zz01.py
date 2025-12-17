@@ -81,12 +81,13 @@ while time <= end:
 
 
 # 写入数据
-sample_step = int(0.2/dt)   # 0.2 / 0.001 = 200
+sample_step = int(0.2/dt)   # 0.2 / 0.01 = 20
 
 rows = []
 for i, t in enumerate(t_list):
     if i % sample_step == 0:
         rows.append([t,x_fu_list[i], v_fu_list[i],x_zh_list[i], v_zh_list[i]])
+
 
 df = pd.DataFrame(rows,columns=['t(s)','x_fu(m)', 'v_fu(m/s)','x_zh(m)', 'v_zh(m/s)'])
 df.to_excel("./result1-1.xlsx", index=False)
