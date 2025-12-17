@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # 此为第一题的第一问，使用四阶龙格库塔法，但是这是最新的方法
-# 使用时间步，更贴合cfd的思想
 import numpy as np
 import pandas as pd
 
@@ -90,5 +89,5 @@ for i, t in enumerate(t_list):
         rows.append([t,x_fu_list[i], v_fu_list[i],x_zh_list[i], v_zh_list[i]])
 
 df = pd.DataFrame(rows,columns=['t(s)','x_fu(m)', 'v_fu(m/s)','x_zh(m)', 'v_zh(m/s)'])
-df.to_csv("./result1-1.xlsx", index=False)
+df.to_excel("./result1-1.xlsx", index=False)
 print("计算完成！")
